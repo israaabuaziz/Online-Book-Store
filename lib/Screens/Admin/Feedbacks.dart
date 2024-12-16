@@ -55,6 +55,7 @@ class Feedbacks extends StatelessWidget {
                       Text('Product: ${feedback['productName']}'),
                       Text('Category: ${feedback['productCategory']}'),
                       const SizedBox(height: 8),
+                      Text('Rating: ${feedback['rating']}'),
                       Text('Feedback: ${feedback['feedback']}'),
                       const SizedBox(height: 8),
                       Text(
