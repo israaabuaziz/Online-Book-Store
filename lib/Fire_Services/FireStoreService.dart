@@ -412,13 +412,14 @@ class FirestoreService {
     }).toList();
   }
 
-  Future<void> saveFeedback({
+Future<void> saveFeedback({
     required String userId,
     required String username,
     required String email,
     required String productName,
     required String productCategory,
     required String feedback,
+    required String rating,
   })
   async {
     try {
