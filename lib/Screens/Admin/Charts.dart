@@ -13,13 +13,13 @@ class Charts extends StatefulWidget {
 class _ChartsState extends State<Charts> {
   final firestoreService = FirestoreService();
 
-  // Create an instance of FirestoreService
+  // Fetch data from Firestore
   Future<Map<String, int>> getData() async {
     final data = await firestoreService.fetchOrderData();
     return data;
   }
 
-  // Function to generate a list of colors for pie chart
+  // Function to generate a list of colors for charts
   List<Color> generateColors(int length) {
     List<Color> colors = [
       Colors.blue,
@@ -32,15 +32,12 @@ class _ChartsState extends State<Charts> {
       Colors.cyan,
       Colors.pink,
     ];
-
-    // Repeat the colors if there are more products than available colors
     return List.generate(length, (index) => colors[index % colors.length]);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -57,7 +54,7 @@ class _ChartsState extends State<Charts> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 50),
             Expanded(
               child: FutureBuilder<Map<String, int>>(
                 future: getData(),
@@ -89,26 +86,100 @@ class _ChartsState extends State<Charts> {
 
                     return PieChartSectionData(
                       value: quantitySold.toDouble(),
-                      color: color, // Assign color
-                      title: '$productName\n$quantitySold', // Show name and quantity
-                      radius: MediaQuery.of(context).size.width * 0.25, // Dynamic radius based on screen width
+                      color: color,
+                      title: '$productName\n$quantitySold',
+                      radius: MediaQuery.of(context).size.width * 0.25,
                       titleStyle: TextStyle(
-                        fontSize: 14, // Adjust font size for labels
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
-                        height: 1.4, // Adjust line height for better spacing
+                        height: 1.4,
                       ),
                     );
                   }).toList();
 
-                  return PieChart(
-                    PieChartData(
-                      sections: pieSections,
-                      borderData: FlBorderData(show: false),
-                      sectionsSpace: 2, // Space between sections
-                      centerSpaceRadius: MediaQuery.of(context).size.width * 0.25,
+                  // Prepare the bar chart data
+                  List<BarChartGroupData> barGroups = aggregatedData.entries.map((entry) {
+                    final index = aggregatedData.keys.toList().indexOf(entry.key);
+                    final quantitySold = entry.value;
 
-                    ),
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: quantitySold.toDouble(),
+                          color: colors[index],
+                          width: 16,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ],
+                      showingTooltipIndicators: [0],
+                    );
+                  }).toList();
+
+                  return Column(
+                    children: [
+                      // Pie Chart Section
+                      Expanded(
+                        flex: 1,
+                        child: PieChart(
+                          PieChartData(
+                            sections: pieSections,
+                            borderData: FlBorderData(show: false),
+                            sectionsSpace: 2,
+                            centerSpaceRadius: MediaQuery.of(context).size.width * 0.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 80),
+
+                      // Bar Chart Section
+                      Expanded(
+                        flex: 1,
+                        child: BarChart(
+                            BarChartData(
+                              maxY: aggregatedData.values.reduce((a, b) => a > b ? a : b).toDouble() + 5,
+                              gridData: FlGridData(show: false),
+                              borderData: FlBorderData(
+                                border: const Border(
+                                  bottom: BorderSide(color: Colors.black),
+                                  left: BorderSide(color: Colors.black),
+                                ),
+                              ),
+                              titlesData: FlTitlesData(
+                                leftTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    getTitlesWidget: (value, _) => Text(
+                                      value.toInt().toString(),
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ),
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    getTitlesWidget: (value, _) {
+                                      final index = value.toInt();
+                                      if (index < aggregatedData.keys.length) {
+                                        return Text(
+                                          aggregatedData.keys.toList()[index],
+                                          style: const TextStyle(fontSize: 10),
+                                        );
+                                      }
+                                      return const Text('');
+                                    },
+                                  ),
+                                ),
+                                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              ),
+                              barGroups: barGroups,
+                            )
+
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
