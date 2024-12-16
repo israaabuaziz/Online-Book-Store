@@ -394,35 +394,55 @@ class _StoreState extends State<Store> {
     );
   }
 
-  void _showFeedbackDialog(String productName, String productCategory) {
+void _showFeedbackDialog(String productName, String productCategory) {
     final TextEditingController feedbackController = TextEditingController();
+    String? selectedRating; // Variable to store selected rating
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Leave Feedback'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Product: $productName',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(
-                'Category: $productCategory',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: feedbackController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Enter your feedback here...',
-                  border: OutlineInputBorder(),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Product: $productName',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-              ),
-            ],
+                Text(
+                  'Category: $productCategory',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  value: selectedRating,
+                  hint: const Text('Select Rating'),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
+                  items: List.generate(5, (index) {
+                    return DropdownMenuItem(
+                      value: (index + 1).toString(),
+                      child: Text((index + 1).toString()),
+                    );
+                  }),
+                  onChanged: (value) {
+                    selectedRating = value;
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: feedbackController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your feedback here...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -433,19 +453,17 @@ class _StoreState extends State<Store> {
             ),
             TextButton(
               onPressed: () async {
-                if (feedbackController.text.isNotEmpty) {
+                if (feedbackController.text.isNotEmpty && selectedRating != null) {
                   try {
                     // Save feedback to Firebase
                     await _firestoreService.saveFeedback(
                       userId: userId,
-                      // Replace with current user ID
                       username: name ?? 'Anonymous',
-                      // Replace with user's name
                       email: email ?? '',
-                      // Replace with user's email
                       productName: productName,
                       productCategory: productCategory,
                       feedback: feedbackController.text,
+                      rating: selectedRating!,
                     );
 
                     // Show success message
@@ -466,7 +484,7 @@ class _StoreState extends State<Store> {
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Feedback cannot be empty!'),
+                      content: Text('Please fill out all fields!'),
                     ),
                   );
                 }
@@ -478,4 +496,7 @@ class _StoreState extends State<Store> {
       },
     );
   }
+
+  
+  
 }
